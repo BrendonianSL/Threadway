@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import { body, validationResult } from 'express-validator';
+import passport from 'passport';
 
 const router = Router();
 
@@ -59,6 +60,64 @@ router.post('/register', validateUser, async (req, res, next) => {
 
         //Return A 201 If Passed.
         return res.status(201).json({ message: 'Account Successully Created' });
+    } catch(error) {
+        console.log(error);
+    }
+});
+
+//Handles User Login
+router.post('/login', validateUser, async (req, res, next) => {
+    console.log('In Login Router.');
+    try {
+        //Check For Validation Errors
+        const validationErrors = validationResult(req);
+
+        //Validation Error Check
+        if(!validationErrors.isEmpty()) {
+            const formErrors = {};
+
+            for (const error of validationErrors.errors) { // <-- Fixed
+                if(error['path'] === 'username') {
+                    formErrors['username'] = "Username is a required field.";
+                } else if (error['path'] === 'password') {
+                    formErrors['password'] = "Password is a required field.";
+                }
+            }
+
+            return res.status(400).json({ error: formErrors });
+        }
+
+        console.log('Passed Validation & Sanitization');
+
+        //Executes Our Created Strategy.
+        const authenticate = passport.authenticate('local', (err, user, info) => {
+            console.log('Beginning Authentication');
+
+            if(err) {
+                console.log('Authentication Error Occured!');
+                return res.status(500).json({ error: err.message });
+            }
+
+            if(!user) {
+                console.log('No User Found During Authentication!');
+                return res.status(401).json({ error: info?.message || 'Login Failed.'});
+            }
+
+            //Attempt A Login
+            req.login(user, (err) => {
+                console.log('Attempting To Log In');
+
+                if(err) {
+                    return res.status(500).json({ error: err.message || 'Internal Server Error.'})
+                }
+
+                return res.status(200).json({ message: 'Login Successfull.' })
+            });
+        });
+
+        console.log('Login Router: Before Authentication.');
+        authenticate(req, res, next);
+
     } catch(error) {
         console.log(error);
     }
