@@ -48,14 +48,13 @@ router.get('/', async (req, res, next) => {
     }
 
     //Begin A Search Of All Threads.
-    const { data, error } = await req.supabase.from('threads').select('*').eq('id', req.user.id).limit(20);
+    const { data, error } = await req.supabase.from('threads').select('*').eq('user_id', req.user.id).limit(20);
 
     //Checks For Error.
     if(error) {
         //Return A 500 Error Code.
         return res.status(500).json({ error: 'Trouble Fetching Threads' });
     }
-
     //Return A 200.
     return res.status(200).json({ message: 'Successfully Fetched Threads.', data: data});
 });
