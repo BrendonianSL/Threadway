@@ -7,6 +7,8 @@ const validateThreadInput = [body('title').notEmpty().withMessage('Thread Title 
     body('link').notEmpty().withMessage('Thread Link Is Required.').isURL().withMessage('Thread Link Must Be A Valid URL.').escape()
 ];
 
+const validateID = [body('id').notEmpty().withMessage('Thread ID Is Required').escape().isInt().withMessage('Thread ID Must Be An Integer.')];
+
 
 //Router Responsible For Creating Threads.
 router.post('/', validateThreadInput, async (req, res, next) => {
@@ -65,8 +67,37 @@ router.put('/', (req, res, next) => {
 });
 
 //Router Responsible For Deleting An Existing Thread
-router.delete('/', (req, res, next) => {
+router.delete('/', validateID, async (req, res, next) => {
+    try {
+        //Check If User Is Authorized.
+        if(!req.isAuthenticated()) {
+            //Send A 401 (Unauthorized)
+            return res.status(401).json({ error: 'User Is Not Authorized'} );
+        }
 
+        const validationErrors = validationResult(req);
+
+        if(!validationErrors.isEmpty()) {
+            return res.status(400).json({ error: validationErrors.array() })
+        }
+
+        //Parse Request Body.
+        const { id } = req.body;
+
+        //Initiate Delete Request.
+        const { error } = await req.supabase.from('threads').delete().eq('id', id).eq('user_id', req.user.id).single();
+
+        //Check For An Error.
+        if(error) {
+            //Return A 500.
+            return res.status(500).json({ error: 'Internal Server Error' });
+        }
+
+        //If Success, Return A 200.
+        return res.status(200).json({ message: 'Thread Deleted' });
+    } catch(error) {
+        console.log(error);
+    }
 });
 
 export default router;

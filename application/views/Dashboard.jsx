@@ -4,12 +4,15 @@ import { useNavigate } from 'react-router';
 
 export default function Dashboard() {
 
-    //UseState For Holding All Current Threads.
+    //UseStates For Threads
     const [threads, setThreads] = useState([]);
+    const [threadToDelete, setThreadToDelete] = useState(null); //Holds Information On Attempt To Delete A Thread.
+
     const [togglePlatform, setTogglePlatform] = useState(false);
 
 
     const [toggleCreateThread, setToggleCreateThread] = useState(false);
+
     const [isLoading, setIsLoading] = useState(false);
     const [createThreadErrors, setCreateThreadErrors] = useState({});
     const [showNotification, setShowNotification] = useState(false);
@@ -25,6 +28,11 @@ export default function Dashboard() {
           return false;
         }
     }
+
+    //UseEffect To Log threadToDelete.
+    useEffect(() => {
+        console.log(threadToDelete);
+    }, [threadToDelete]);
 
     //Helper Function To Fetch All Threads That Belong To The User.
     const fetchThreads = async () => {
@@ -144,6 +152,50 @@ export default function Dashboard() {
         //Retrigger Fetch.
         fetchThreads();
     }
+    
+    //Helper Function TO Delete A Thread.
+    async function deleteThread() {
+        try {
+            //Sets Is Loading To True.
+            setIsLoading(true);
+
+            //Initiate Fetch.
+            const response = await fetch('http://localhost:3001/threads', {
+                method: 'DELETE',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    id: threadToDelete,
+                })
+            });
+
+            //Check For Errors
+            if(!response.ok) {
+                //Handle Errors.
+            }
+
+            console.log('Delete Worked');
+
+            //Parse The Data And Log it.
+            const data = await response.json();
+            console.log(data);
+
+            //Toggle Off The Delete Menu.
+            setThreadToDelete(null);
+
+            //Disable Loading.
+            setIsLoading(false);
+
+            //Trigger Notification.
+
+            //Reload Threads
+            fetchThreads();
+        } catch(error) {
+            
+        }
+    }
       
     //UseEffect For Fetching All Threads That Belong To The User On Mount.
     useEffect(() => {
@@ -208,7 +260,7 @@ export default function Dashboard() {
                 <img className='w-[4.688rem] h-[6.25rem]' src='/paperclip.svg' />
                 <h2>You haven't created any threads yet!</h2>
                 <button onClick={setShowNotification(true)} className='flex items-center gap-2 bg-(--ctaColor) text-(--ivory) text-sm px-4 py-4 rounded-lg'><img src='plus.svg' alt='Plus Symbol' />Create A Thread</button>
-            </div> : threads.data?.map(thread => <Thread title={thread.title} description={thread.description} link={thread.link}/>)}
+            </div> : threads.data?.map(thread => <Thread key={thread.id} id={thread.id} title={thread.title} description={thread.description} link={thread.link} deleteFunction={setThreadToDelete} />)}
             <div className={`${toggleCreateThread ? 'flex' : 'hidden'} items-center justify-center absolute min-w-[100vw] min-h-[100vh] bg-(--onyx80) left-0`}>
                 <div className='flex flex-col gap-8 bg-(--ivory) w-[43.75rem] max-w-[90rem] rounded-lg px-8 py-8'>
                     <h2>New Thread</h2>
@@ -233,6 +285,16 @@ export default function Dashboard() {
                             <input className='bg-(--ctaColor) lg:hover:bg-[#2FC769] lg:hover:cursor-pointer rounded-lg text-(--ivory) px-4 py-2 text-sm' type='submit' value='Create' />
                         </div>
                     </form>
+                </div>
+            </div>
+            <div className={`${threadToDelete ? 'flex' : 'hidden'} items-center justify-center absolute min-w-[100vw] min-h-[100vh] bg-(--onyx80) left-0`}>
+                <div className='flex flex-col gap-8 bg-(--ivory) w-[43.75rem] max-w-[90rem] rounded-lg px-8 py-8'>
+                    <h2>Delete Thread</h2>
+                    <span>Are You Sure You Want To Delete This Thread?</span>
+                    <div className='flex justify-end gap-4'>
+                        <button onClick={() => {if(isLoading) return; setThreadToDelete(null)}} className='bg-(--onyx) lg:hover:cursor-pointer rounded-lg text-(--ivory) px-4 py-2 text-sm' type='button' value='Cancel'>Cancel</button>
+                        <button onClick={() => deleteThread()} className='bg-(--error) lg:hover:bg-[#FCA5A5] lg:hover:cursor-pointer rounded-lg text-(--ivory) px-4 py-2 text-sm' type='submit' value='Create'>Delete</button>
+                    </div>
                 </div>
             </div>
             <div className={`fixed bottom-4 right-4 px-4 py-4 rounded-lg border-b-4 border-b-[var(--ctaColor)] bg-[#F2F2F2] shadow-md transition-all duration-500 ease-in-out ${showNotification ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0 pointer-events-none'}`}>
