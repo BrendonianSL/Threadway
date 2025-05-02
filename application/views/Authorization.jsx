@@ -77,7 +77,7 @@ export default function Authorization() {
         <section className='flex justify-center items-center w-full h-[100vh]'>
             <div className='flex flex-col gap-8 w-full max-w-[43.75rem] h-auto'>
                 <div className='flex flex-col gap-8'>
-                    <img className='w-[50px] h-[50px]'src='/logoicon.svg' alt='Threadway Logo' />
+                    <img className='w-[50px] h-[50px]' src='/logoicon.svg' alt='Threadway Logo' />
                     <div className='flex flex-col gap-2'>
                         <h1>Welcome Back!</h1>
                         <p className='text-(--onyx80)'>Sign in to your account below.</p>

@@ -211,56 +211,16 @@ export default function Dashboard() {
     }, [showNotification, setShowNotification]);
 
     return (
-        <section className='w-full max-w-[90rem] flex flex-col gap-8 px-4 lg:px-8 grow'>
+        <section className='w-full max-w-[1000px] h-full flex flex-col gap-8 px-4 py-16 lg:px-8 grow'>
             <div className='flex justify-between w-full'>
-                <h1>Hey, Brendan!</h1>
-                <button  onClick={() => setToggleCreateThread(true)} className='flex items-center gap-2 bg-(--ctaColor) text-(--ivory) text-sm px-2 py-2 rounded-lg'><img src='plus.svg' alt='Plus Symbol' />Create</button>
-            </div>
-            <div className='flex gap-4 items-center'>
-                <div className='flex'>
-                    <img src='filter.svg' />
-                    <span className='ml-2'>Filters</span>
-                </div>
-                <div className='flex bg-(--onyx) overflow-hidden rounded-sm'>
-                    <div className='flex items-center lg:hover:bg-(--ctaColor) justify-center w-[36px] h-[36px]'>
-                        <img className='w-[18px] h-[18px]' src='post.svg' />
-                    </div>
-                    <div className='flex items-center lg:hover:bg-(--ctaColor) justify-center w-[36px] h-[36px]'>
-                        <img className='w-[18px] h-[18px]' src='video.svg' />
-                    </div>
-                    <div className='flex items-center lg:hover:bg-(--ctaColor) justify-center w-[36px] h-[36px]'>
-                        <img className='w-[18px] h-[18px]' src='image.svg' />
-                    </div>
-                    <div className='flex items-center lg:hover:bg-(--ctaColor) justify-center w-[36px] h-[36px]'>
-                        <img className='w-[18px] h-[18px]' src='audio.svg' />
-                    </div>
-                    <div className='flex items-center lg:hover:bg-(--ctaColor) justify-center w-[36px] h-[36px]'>
-                        <img className='w-[18px] h-[18px]' src='article.svg' />
-                    </div>
-                </div>
-                <div onClick={() => setTogglePlatform(prev => !prev)} className='relative flex items-center bg-(--onyx) text-(--ivory) rounded-sm h-[36px] px-4 lg:hover:cursor-pointer'>
-                    All Platforms
-                    <div className={`${togglePlatform ? 'block' : 'hidden'} absolute top-[105%] left-0 w-[150px] bg-(--onyx) rounded-sm`}>
-                        <div className='px-2 py-2'>
-                            Youtube
-                        </div>
-                        <div className='px-2 py-2'>
-                            Reddit
-                        </div>
-                        <div className='px-2 py-2'>
-                            X
-                        </div>
-                        <div className='px-2 py-2'>
-                            Instagram
-                        </div>
-                    </div>
-                </div>
+                <h1>Thread Dashboard</h1>
+                <button  onClick={() => setToggleCreateThread(true)} className='flex items-center gap-2 bg-(--ctaColor) text-(--ivory) text-sm px-4 py-1 rounded-lg'><img src='plus.svg' alt='Plus Symbol' /></button>
             </div>
             {threads.data?.length === 0 ? <div className='flex flex-col gap-4 items-center justify-center grow'>
                 <img className='w-[4.688rem] h-[6.25rem]' src='/paperclip.svg' />
                 <h2>You haven't created any threads yet!</h2>
                 <button onClick={setShowNotification(true)} className='flex items-center gap-2 bg-(--ctaColor) text-(--ivory) text-sm px-4 py-4 rounded-lg'><img src='plus.svg' alt='Plus Symbol' />Create A Thread</button>
-            </div> : threads.data?.map(thread => <Thread key={thread.id} id={thread.id} title={thread.title} description={thread.description} link={thread.link} deleteFunction={setThreadToDelete} />)}
+            </div> : <div className='flex flex-col gap-4'>{threads.data?.map(thread => <Thread key={thread.id} id={thread.id} title={thread.title} description={thread.description} link={thread.link} deleteFunction={setThreadToDelete} />)}</div>}
             <div className={`${toggleCreateThread ? 'flex' : 'hidden'} items-center justify-center absolute min-w-[100vw] min-h-[100vh] bg-(--onyx80) left-0`}>
                 <div className='flex flex-col gap-8 bg-(--ivory) w-[43.75rem] max-w-[90rem] rounded-lg px-8 py-8'>
                     <h2>New Thread</h2>
@@ -287,7 +247,7 @@ export default function Dashboard() {
                     </form>
                 </div>
             </div>
-            <div className={`${threadToDelete ? 'flex' : 'hidden'} items-center justify-center absolute min-w-[100vw] min-h-[100vh] bg-(--onyx80) left-0`}>
+            <div className={`${threadToDelete ? 'flex' : 'hidden'} items-center justify-center w-full absolute h-full  left-0`}>
                 <div className='flex flex-col gap-8 bg-(--ivory) w-[43.75rem] max-w-[90rem] rounded-lg px-8 py-8'>
                     <h2>Delete Thread</h2>
                     <span>Are You Sure You Want To Delete This Thread?</span>
