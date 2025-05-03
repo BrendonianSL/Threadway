@@ -62,8 +62,33 @@ router.get('/', async (req, res, next) => {
 });
 
 //Router Responsible For Updating An Existing Thread
-router.put('/', (req, res, next) => {
+router.put('/', validateThreadInput, async (req, res, next) => {
+    //Check For Data Errors.
+    const validationErrors = validationResult(req);
 
+    if(!validationErrors.isEmpty()) {
+        return res.status(400).json({ error: validationErrors.array() })
+    }
+
+    //Check If The User Is Authenticated.
+    if(!req.isAuthenticated()) {
+        return res.status(401).json({ error: 'User Is Not Authorized.' });
+    }
+
+    //Parse Request Body.
+    const { id, title, description, link } = req.body;
+
+    //Initiate Update Request.
+    const { error } = await req.supabase.from('threads').update({ title: title, description: description, link: link }).eq('id', id).eq('user_id', req.user.id).single();
+
+    //Check For An Error.
+    if(error) {
+        //Return A 500.
+        return res.status(500).json({ error: 'Internal Server Error.' });
+    }
+
+    //If Success, Return A 200.
+    return res.status(200).json({ message: 'Thread Updated.' });
 });
 
 //Router Responsible For Deleting An Existing Thread
@@ -72,7 +97,7 @@ router.delete('/', validateID, async (req, res, next) => {
         //Check If User Is Authorized.
         if(!req.isAuthenticated()) {
             //Send A 401 (Unauthorized)
-            return res.status(401).json({ error: 'User Is Not Authorized'} );
+            return res.status(401).json({ error: 'User Is Not Authorized.'} );
         }
 
         const validationErrors = validationResult(req);

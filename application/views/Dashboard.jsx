@@ -7,9 +7,7 @@ export default function Dashboard() {
     //UseStates For Threads
     const [threads, setThreads] = useState([]);
     const [threadToDelete, setThreadToDelete] = useState(null); //Holds Information On Attempt To Delete A Thread.
-
-    const [togglePlatform, setTogglePlatform] = useState(false);
-
+    const [threadToEdit, setThreadToEdit] = useState(null); //Holds Information About Thread To Edit.
 
     const [toggleCreateThread, setToggleCreateThread] = useState(false);
 
@@ -26,6 +24,36 @@ export default function Dashboard() {
           return true;
         } catch (_) {
           return false;
+        }
+    }
+
+    function handleDataCheck(title, link, description) {
+        //Creates An Error Object.
+        const errors = { title: null, link: null, description: null };
+        const hasErrors = false;
+
+        //Check The Title
+        if(!title) {
+            errors.title = 'Thread Title Is Required.';
+        }
+
+        if(!link.trim()) {
+            errors.link = 'Thread Link Is Required.';
+        } else if(!isValidURL(link)) {
+            errors.link = 'Thread Link Must Be A Valid URL.';
+        }
+
+        if(!description) {
+            errors.description = 'Thread Description Is Required.';
+        }
+
+        //Checks All Properties Of The Error Object To See If At Least One Is Ture.
+        if(Object.values(errors).some()) {
+            console.log('Returning Error Object.');
+            return {
+                errors: errors,
+                hasErrors: true
+            }
         }
     }
 
@@ -138,7 +166,6 @@ export default function Dashboard() {
 
         //Log It
         console.log(data);
-        console.log('Toggling Off');
 
         //Toggle Menu Off
         setToggleCreateThread(false);
@@ -196,12 +223,82 @@ export default function Dashboard() {
             
         }
     }
+
+    async function editThread(e) {
+        try {
+            //Prevents Page Re-Render.
+            e.preventDefault();
+
+            console.log('In Edit Thread.')
+
+            //Check If We Are Already Loading.
+            if(isLoading) {
+                console.log('Already Loading.');
+                return; 
+            }
+
+            //Triggers Loading State.
+            setIsLoading(true);
+
+
+            console.log('No Errors. Starting Fetch.');
+
+            //Initiate Update.
+            const editResponse = await fetch('http://localhost:3001/threads', {
+                method: 'PUT',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    id: threadToEdit.id,
+                    title: e.target.title.value,
+                    link: e.target.link.value,
+                    description: e.target.description.value
+                })
+            });
+
+            //Parse The Response.
+            const data = await editResponse.json();
+
+            //Check For Errors.
+            if(!editResponse.ok) {
+                //Handle Errors.
+            }
+
+            console.log(data);
+
+            //Set Thread To Edit To Null.
+            setThreadToEdit(null);
+
+            //Disable Loading.
+            setIsLoading(true);
+
+            //Trigger Notification.
+            setShowNotification(true);
+
+            //Retrigger Fetch.
+            fetchThreads();
+
+        } catch(error) {
+
+        }
+    }
       
     //UseEffect For Fetching All Threads That Belong To The User On Mount.
     useEffect(() => {
         fetchThreads();
     }, []);
 
+    useEffect(() => {
+        if (threadToEdit?.link?.includes('&#x2F;')) {
+          setThreadToEdit(prev => ({
+            ...prev,
+            link: prev.link.replace(/&#x2F;/g, "/")
+          }));
+        }
+      }, [threadToEdit]);
+      
     //UseEffect For Removing The Notification After 3 Seconds.
     useEffect(() => {
         if(showNotification) {
@@ -211,7 +308,7 @@ export default function Dashboard() {
     }, [showNotification, setShowNotification]);
 
     return (
-        <section className='w-full max-w-[1000px] h-full flex flex-col gap-8 px-4 py-16 lg:px-8 grow'>
+        <section className='w-full max-w-[1000px] h-full flex flex-col gap-8 px-4 py-8 lg:py-16 lg:px-8 grow'>
             <div className='flex justify-between w-full'>
                 <h1>Thread Dashboard</h1>
                 <button  onClick={() => setToggleCreateThread(true)} className='flex items-center gap-2 bg-(--ctaColor) text-(--ivory) text-sm px-4 py-1 rounded-lg'><img src='plus.svg' alt='Plus Symbol' /></button>
@@ -220,24 +317,24 @@ export default function Dashboard() {
                 <img className='w-[4.688rem] h-[6.25rem]' src='/paperclip.svg' />
                 <h2>You haven't created any threads yet!</h2>
                 <button onClick={setShowNotification(true)} className='flex items-center gap-2 bg-(--ctaColor) text-(--ivory) text-sm px-4 py-4 rounded-lg'><img src='plus.svg' alt='Plus Symbol' />Create A Thread</button>
-            </div> : <div className='flex flex-col gap-4'>{threads.data?.map(thread => <Thread key={thread.id} id={thread.id} title={thread.title} description={thread.description} link={thread.link} deleteFunction={setThreadToDelete} />)}</div>}
-            <div className={`${toggleCreateThread ? 'flex' : 'hidden'} items-center justify-center absolute min-w-[100vw] min-h-[100vh] bg-(--onyx80) left-0`}>
-                <div className='flex flex-col gap-8 bg-(--ivory) w-[43.75rem] max-w-[90rem] rounded-lg px-8 py-8'>
+            </div> : <div className='flex flex-col gap-4'>{threads.data?.map(thread => <Thread key={thread.id} id={thread.id} title={thread.title} description={thread.description} link={thread.link} deleteFunction={setThreadToDelete} editFunction={setThreadToEdit} />)}</div>}
+            <div className={`${toggleCreateThread ? 'flex' : 'hidden'} items-center justify-center absolute w-full h-full top-0 left-0`}>
+                <div className='flex flex-col gap-8 bg-[#1F1F1F] border-[1px] border-[#363839] w-[43.75rem] max-w-[90rem] rounded-lg px-8 py-8'>
                     <h2>New Thread</h2>
                     <form onSubmit={submitThread} className='flex flex-col gap-4'>
                         <div className='flex flex-col gap-2'>
                             <label htmlFor='title'>Thread Title</label>
-                            <input className='flex px-4 py-4 rounded-lg w-full bg-[#F2F2F2] border-[1px] border-[#27272720]' type='text' id='title' name='title' placeholder='Cool Thread Title' />
+                            <input className='flex px-4 py-4 rounded-lg w-full bg-[#F2F2F2] border-[1px] text-(--night) border-[#27272720]' type='text' id='title' name='title' placeholder='Cool Thread Title' />
                             <span className={`${createThreadErrors.title ? 'block' : 'hidden'} text-(--error)`}>{createThreadErrors.title}</span>
                         </div>
                         <div className='flex flex-col'>
                             <label htmlFor='link'>Thread Link</label>
-                            <input className='flex px-4 py-4 rounded-lg w-full  bg-[#F2F2F2] border-[1px] border-[#27272720]' type='text' id='link' name='link' placeholder='https://www.reallycoollink.com' />
+                            <input className='flex px-4 py-4 rounded-lg w-full  bg-[#F2F2F2] border-[1px] text-(--night) border-[#27272720]' type='text' id='link' name='link' placeholder='https://www.reallycoollink.com' />
                             <span className={`${createThreadErrors.link ? 'block' : 'hidden'} text-(--error)`}>{createThreadErrors.link}</span>
                         </div>
                         <div className='flex flex-col'>
                             <label htmlFor='description'>Thread Description</label>
-                            <input className='flex px-4 py-4 rounded-lg w-full  bg-[#F2F2F2] border-[1px] border-[#27272720]' type='text' id='description' name='description' placeholder='Cool Thread Description' />
+                            <input className='flex px-4 py-4 rounded-lg w-full  bg-[#F2F2F2] border-[1px] text-(--night) border-[#27272720]' type='text' id='description' name='description' placeholder='Cool Thread Description' />
                             <span className={`${createThreadErrors.description ? 'block' : 'hidden'} text-(--error)`}>{createThreadErrors.description}</span>
                         </div>
                         <div className='flex justify-end gap-4'>
@@ -247,14 +344,40 @@ export default function Dashboard() {
                     </form>
                 </div>
             </div>
-            <div className={`${threadToDelete ? 'flex' : 'hidden'} items-center justify-center w-full absolute h-full  left-0`}>
-                <div className='flex flex-col gap-8 bg-(--ivory) w-[43.75rem] max-w-[90rem] rounded-lg px-8 py-8'>
+            <div className={`${threadToDelete ? 'flex' : 'hidden'} items-center justify-center w-full absolute h-full top-0 left-0`}>
+                <div className='flex flex-col gap-8 bg-[#1F1F1F] w-[43.75rem] max-w-[90rem] rounded-lg px-8 py-8'>
                     <h2>Delete Thread</h2>
                     <span>Are You Sure You Want To Delete This Thread?</span>
                     <div className='flex justify-end gap-4'>
                         <button onClick={() => {if(isLoading) return; setThreadToDelete(null)}} className='bg-(--onyx) lg:hover:cursor-pointer rounded-lg text-(--ivory) px-4 py-2 text-sm' type='button' value='Cancel'>Cancel</button>
                         <button onClick={() => deleteThread()} className='bg-(--error) lg:hover:bg-[#FCA5A5] lg:hover:cursor-pointer rounded-lg text-(--ivory) px-4 py-2 text-sm' type='submit' value='Create'>Delete</button>
                     </div>
+                </div>
+            </div>
+            <div className={`${threadToEdit ? 'flex' : 'hidden'} items-center justify-center absolute w-full h-full top-0 left-0`}>
+                <div className='flex flex-col gap-8 bg-[#1F1F1F] border-[1px] border-[#363839] w-[43.75rem] max-w-[90rem] rounded-lg px-8 py-8'>
+                    <h2>New Thread</h2>
+                    <form onSubmit={editThread} className='flex flex-col gap-4'>
+                        <div className='flex flex-col gap-2'>
+                            <label htmlFor='title'>Thread Title</label>
+                            <input className='flex px-4 py-4 rounded-lg w-full bg-[#F2F2F2] border-[1px] text-(--night) border-[#27272720]' type='text' id='title' name='title' placeholder='Cool Thread Title' value={threadToEdit?.title || ""} onChange={(e) => setThreadToEdit({...threadToEdit, title: e.target.value})}/>
+                            <span className={`${createThreadErrors.title ? 'block' : 'hidden'} text-(--error)`}>{createThreadErrors.title}</span>
+                        </div>
+                        <div className='flex flex-col'>
+                            <label htmlFor='link'>Thread Link</label>
+                            <input className='flex px-4 py-4 rounded-lg w-full  bg-[#F2F2F2] border-[1px] text-(--night) border-[#27272720]' type='text' id='link' name='link' placeholder='https://www.reallycoollink.com' value={threadToEdit?.link.replace('/&#x2F;/g', '/') || ""} onChange={(e) => setThreadToEdit({...threadToEdit, link: e.target.value})}/>
+                            <span className={`${createThreadErrors.link ? 'block' : 'hidden'} text-(--error)`}>{createThreadErrors.link}</span>
+                        </div>
+                        <div className='flex flex-col'>
+                            <label htmlFor='description'>Thread Description</label>
+                            <input className='flex px-4 py-4 rounded-lg w-full  bg-[#F2F2F2] border-[1px] text-(--night) border-[#27272720]' type='text' id='description' name='description' placeholder='Cool Thread Description' value={threadToEdit?.description || ""} onChange={(e) => setThreadToEdit({...threadToEdit, description: e.target.value})} />
+                            <span className={`${createThreadErrors.description ? 'block' : 'hidden'} text-(--error)`}>{createThreadErrors.description}</span>
+                        </div>
+                        <div className='flex justify-end gap-4'>
+                            <input onClick={() => {if(isLoading) return; setThreadToEdit(null)}} className='bg-(--error) lg:hover:bg-[#FCA5A5] lg:hover:cursor-pointer rounded-lg text-(--ivory) px-4 py-2 text-sm' type='button' value='Cancel' />
+                            <input className='bg-(--ctaColor) lg:hover:bg-[#2FC769] lg:hover:cursor-pointer rounded-lg text-(--ivory) px-4 py-2 text-sm' type='submit' value='Update' />
+                        </div>
+                    </form>
                 </div>
             </div>
             <div className={`fixed bottom-4 right-4 px-4 py-4 rounded-lg border-b-4 border-b-[var(--ctaColor)] bg-[#F2F2F2] shadow-md transition-all duration-500 ease-in-out ${showNotification ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0 pointer-events-none'}`}>
