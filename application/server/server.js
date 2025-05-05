@@ -40,7 +40,7 @@ app.use(
 // Setup Sessions
 app.use(
   session({
-    name: 'BrendanCookie',
+    name: 'connect.sid',
     secret: 'keyboard cat',
     resave: false,
     saveUninitialized: false,

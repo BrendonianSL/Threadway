@@ -9,6 +9,21 @@ const validateUser = [body('username').notEmpty().withMessage('Username Is Requi
     body('password').notEmpty().withMessage('Password Is Required').trim().escape()
 ];
 
+router.get('/', async (req, res, next) => {
+    try {
+        //Check If User Is Authenticated.
+        if(!req.isAuthenticated()) {
+            //Send A 401 (Unauthorized)
+            return res.status(401).json({ error: 'User Is Not Authorized.'} );
+        }
+
+        //If They Are Authenticated, Send A 200.
+        return res.status(200).json({ message: 'User Is Authorized' });
+    } catch(error) {
+        next(error);
+    }
+})
+
 router.post('/register', validateUser, async (req, res, next) => {
     try {
         const validationErrors = validationResult(req);
@@ -61,13 +76,12 @@ router.post('/register', validateUser, async (req, res, next) => {
         //Return A 201 If Passed.
         return res.status(201).json({ message: 'Account Successully Created' });
     } catch(error) {
-        console.log(error);
+        next(error);
     }
 });
 
 //Handles User Login
 router.post('/login', validateUser, async (req, res, next) => {
-    console.log('In Login Router.');
     try {
         //Check For Validation Errors
         const validationErrors = validationResult(req);
@@ -119,8 +133,26 @@ router.post('/login', validateUser, async (req, res, next) => {
         authenticate(req, res, next);
 
     } catch(error) {
-        console.log(error);
+        next(error);
     }
+});
+
+router.post('/logout', (req, res, next) => {
+    req.logout(function(err) {
+      if (err) return next(err);
+  
+      req.session.destroy(() => {
+        res.clearCookie('connect.sid'); // optional
+        return res.status(200).json({ message: 'Logout Successful.' });
+      });
+    });
+  });
+  
+  
+
+router.use((err, req, res, next) => {
+    console.error('Unexpected Error.', err);
+    return res.status(500).json({ error: 'Internal Server Error.' });
 });
 
 export default router;

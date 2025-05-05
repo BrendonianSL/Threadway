@@ -1,8 +1,10 @@
-import { Link } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import { useState, useEffect } from 'react';
 
 export default function Header() {
 
+    const navigate = useNavigate();
+    
     //Keeps List Of Social Links
     const socialLinks = [
         {
@@ -23,11 +25,6 @@ export default function Header() {
             icon: '/home.svg',
             url: '/dashboard'
         },
-        {
-            label: 'Settings',
-            icon: '/settings.svg',
-            url: '/settings'
-        }
     ];
 
     //UseState For Toggling Menu Open Or Close.
@@ -44,6 +41,22 @@ export default function Header() {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
+    const handleLogout = () => {
+        //Make A Request To The Server.
+        const response = fetch('http://localhost:3001/user/logout', {
+            method: 'POST',
+            credentials: 'include'
+        });
+
+        //Check If The Response Is Ok
+        if(!response.ok) {
+            //Error Handle.
+        }
+
+        //If The Response Is Ok, Navigate To Login
+        navigate('/login');
+    }
+
     //Helper Function To Set Selected Menu Item.
     return (
         <header className='relative flex lg:flex-col items-start justify-between lg:justify-start gap-8 w-full lg:min-h-screen lg:max-w-[18.75rem] bg-[#141414] px-4 py-8'>
@@ -53,7 +66,7 @@ export default function Header() {
                     <span className='px-2'>Navigation</span>
                     {navigationLinks.map((link) => {
                         return (
-                            <Link to={link.url} className='flex items-center gap-2 w-full px-2 py-2 rounded-md lg:hover:bg-[#1F1F1F] lg:hover:cursor-pointer'>
+                            <Link key={link.label} to={link.url} className='flex items-center gap-2 w-full px-2 py-2 rounded-md lg:hover:bg-[#1F1F1F] lg:hover:cursor-pointer'>
                                 <img src={link.icon} />
                                 {link.label}
                             </Link>
@@ -64,7 +77,7 @@ export default function Header() {
                     <span className='px-2'>Socials</span>
                     {socialLinks.map((link) => {
                         return (
-                            <Link to={link.url} className='flex items-center gap-2 w-full px-2 py-2 rounded-md lg:hover:bg-[#1F1F1F] lg:hover:cursor-pointer'>
+                            <Link key={link.label} to={link.url} className='flex items-center gap-2 w-full px-2 py-2 rounded-md lg:hover:bg-[#1F1F1F] lg:hover:cursor-pointer'>
                                 <img src={link.icon} />
                                 {link.label}
                             </Link>
@@ -98,9 +111,9 @@ export default function Header() {
                             )
                         })}
                     </div>
+                    <button onClick={handleLogout} className='flex items-center gap-2 w-full px-2 py-2 rounded-md lg:hover:bg-[#1F1F1F] lg:hover:cursor-pointer text-(--error)'><img src='/exit.svg' /> Logout</button>
                 </div>
             </div>
-
         </header>
     )
 }

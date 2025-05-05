@@ -1,10 +1,6 @@
 @import "tailwindcss";
 
 @layer base {
-  h1, h2 {
-    font-family: 'Gabarito';
-  }
-
   h1 {
     font-size: 2rem;
     font-weight: 600;
@@ -12,6 +8,13 @@
 
   h2 {
     font-size: 1.5rem;
+    font-weight: 500;
+  }
+}
+
+@layer components {
+  h2 {
+    @apply text-[1.25rem] md:text-[1.5rem] font-semibold;
   }
 }
 
